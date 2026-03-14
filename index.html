@@ -3,147 +3,249 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Ставка-Босс: Pro</title>
+    <title>Ставка-Босс: Мировой Рейтинг</title>
+    <!-- Подключаем официальный скрипт Telegram -->
     <script src="https://telegram.org"></script>
     <style>
-        :root { --bg: #0f1218; --glass: rgba(255, 255, 255, 0.05); --neon-blue: #00f2ff; --neon-red: #ff4d4d; --gold: #ffd700; }
-        body { font-family: sans-serif; background: var(--bg); color: white; margin: 0; padding: 20px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; overflow: hidden; }
-        .card { background: var(--glass); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); border-radius: 20px; padding: 15px; margin-bottom: 12px; text-align: center; }
-        .label { font-size: 11px; opacity: 0.6; text-transform: uppercase; margin-bottom: 5px; }
-        .value { font-size: 28px; font-weight: 800; transition: 0.3s; }
+        :root { 
+            --bg: #0f1218; 
+            --glass: rgba(255, 255, 255, 0.05); 
+            --neon-blue: #00f2ff; 
+            --neon-red: #ff4d4d; 
+            --gold: #ffd700; 
+        }
+        
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            background: var(--bg); 
+            color: white; 
+            margin: 0; 
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            height: 100vh; 
+            box-sizing: border-box; 
+            overflow: hidden; 
+            user-select: none;
+        }
+
+        /* Карточки показателей */
+        .card { 
+            background: var(--glass); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255,255,255,0.1); 
+            border-radius: 20px; 
+            padding: 15px; 
+            margin-bottom: 12px; 
+            text-align: center; 
+        }
+        .label { font-size: 11px; opacity: 0.6; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 5px; }
+        .value { font-size: 30px; font-weight: 900; transition: 0.3s; }
+        
         .row { display: flex; justify-content: space-between; gap: 10px; }
         .card-half { flex: 1; }
-        .danger { color: var(--neon-red); }
-        .safe { color: var(--neon-blue); }
-        .controls { display: flex; gap: 15px; margin-top: auto; padding-bottom: 10px; }
-        button { flex: 1; padding: 18px; border-radius: 15px; border: none; font-weight: bold; font-size: 14px; cursor: pointer; color: white; }
-        .btn-up { background: linear-gradient(135deg, #0088cc, #00f2ff); }
+        
+        .danger { color: var(--neon-red); text-shadow: 0 0 10px rgba(255,77,77,0.3); }
+        .safe { color: var(--neon-blue); text-shadow: 0 0 10px rgba(0,242,255,0.3); }
+
+        /* Управление */
+        .controls { display: flex; gap: 15px; margin-top: auto; padding-bottom: 15px; }
+        button { 
+            flex: 1; 
+            padding: 20px; 
+            border-radius: 18px; 
+            border: none; 
+            font-weight: bold; 
+            font-size: 16px; 
+            cursor: pointer; 
+            color: white; 
+            transition: transform 0.1s; 
+        }
+        button:active { transform: scale(0.96); }
+        .btn-up { background: linear-gradient(135deg, #0088cc, #00f2ff); box-shadow: 0 5px 15px rgba(0,136,204,0.4); }
         .btn-down { background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); }
-        #game-over { display: none; position: fixed; inset: 0; background: rgba(10,12,18,0.98); z-index: 200; flex-direction: column; align-items: center; justify-content: center; padding: 30px; text-align: center; }
-        .stat-grid { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 20px 0; }
-        .stat-item { background: rgba(255,255,255,0.05); padding: 10px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); }
-        .stat-label { font-size: 10px; opacity: 0.5; }
+
+        /* Экран завершения */
+        #game-over { 
+            display: none; 
+            position: fixed; 
+            inset: 0; 
+            background: rgba(10,12,18,0.98); 
+            z-index: 200; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 30px; 
+            text-align: center; 
+        }
+        .stat-grid { 
+            width: 100%; 
+            display: grid; 
+            grid-template-columns: 1fr 1fr; 
+            gap: 12px; 
+            margin: 25px 0; 
+        }
+        .stat-item { 
+            background: rgba(255,255,255,0.05); 
+            padding: 12px; 
+            border-radius: 12px; 
+            border: 1px solid rgba(255,255,255,0.1); 
+        }
+        .stat-label { font-size: 10px; opacity: 0.5; margin-bottom: 4px; text-transform: uppercase; }
+        .stat-val { font-weight: bold; font-size: 18px; color: var(--neon-blue); }
+
+        .final-score-box { margin-bottom: 30px; }
+        .final-score-label { font-size: 12px; opacity: 0.7; margin-bottom: 5px; }
+        .final-score-val { font-size: 48px; font-weight: 900; color: var(--gold); text-shadow: 0 0 20px rgba(255,215,0,0.4); }
     </style>
 </head>
 <body>
 
-    <div class="row">
-        <div class="card card-half">
-            <div class="label">Курс $</div>
-            <div id="rub-val" class="value">98.5</div>
+    <!-- Основной интерфейс игры -->
+    <div id="game-ui">
+        <div class="row">
+            <div class="card card-half">
+                <div class="label">Курс $</div>
+                <div id="rub-val" class="value">98.5</div>
+            </div>
+            <div class="card card-half">
+                <div class="label">ВВП</div>
+                <div id="vvp-val" class="value safe">+1.2%</div>
+            </div>
         </div>
-        <div class="card card-half">
-            <div class="label">ВВП</div>
-            <div id="vvp-val" class="value safe">+1.2%</div>
+
+        <div class="card">
+            <div class="label">Ключевая Ставка</div>
+            <div id="rate-val" class="value safe">16.0%</div>
+        </div>
+
+        <div class="card">
+            <div class="label">Инфляция</div>
+            <div id="inflation-val" class="value danger">11.2%</div>
+        </div>
+
+        <div style="text-align: center; opacity: 0.5; font-size: 13px; margin-top: 10px;">
+            У руля: <span id="time-val" style="color:var(--neon-blue); font-weight:bold;">0</span> сек.
         </div>
     </div>
 
-    <div class="card">
-        <div class="label">Ключевая Ставка</div>
-        <div id="rate-val" class="value safe">16.0%</div>
-    </div>
-
-    <div class="card">
-        <div class="label">Инфляция</div>
-        <div id="inflation-val" class="value danger">11.2%</div>
-    </div>
-
-    <div style="text-align: center; opacity: 0.5; font-size: 12px;">Выживание: <span id="time-val">0</span> сек.</div>
-
+    <!-- Кнопки управления -->
     <div class="controls">
         <button class="btn-down" onclick="changeRate(-1)">СНИЗИТЬ</button>
         <button class="btn-up" onclick="changeRate(1)">ПОДНЯТЬ</button>
     </div>
 
+    <!-- Экран Game Over -->
     <div id="game-over">
-        <h1 id="death-title" style="color: var(--neon-red);">ДЕФОЛТ!</h1>
-        <p id="death-reason" style="font-size: 14px; opacity: 0.8;"></p>
+        <h1 id="death-title" style="color: var(--neon-red); font-size: 36px; margin: 0;">ДЕФОЛТ!</h1>
+        <p id="death-reason" style="opacity: 0.8; font-size: 15px; margin-top: 10px;"></p>
         
         <div class="stat-grid">
-            <div class="stat-item"><div class="stat-label">ВВП</div><div id="final-vvp"></div></div>
-            <div class="stat-item"><div class="stat-label">Курс $</div><div id="final-rub"></div></div>
-            <div class="stat-item"><div class="stat-label">Инфляция</div><div id="final-inf"></div></div>
-            <div class="stat-item"><div class="stat-label">Ставка</div><div id="final-rate"></div></div>
+            <div class="stat-item"><div class="stat-label">Финальный ВВП</div><div id="final-vvp" class="stat-val"></div></div>
+            <div class="stat-item"><div class="stat-label">Курс Доллара</div><div id="final-rub" class="stat-val"></div></div>
+            <div class="stat-item"><div class="stat-label">Инфляция</div><div id="final-inf" class="stat-val"></div></div>
+            <div class="stat-item"><div class="stat-label">Ставка ЦБ</div><div id="final-rate" class="stat-val"></div></div>
         </div>
 
-        <div style="margin-bottom: 20px;">
-            <div class="label">Ваш результат:</div>
-            <div id="final-time" style="font-size: 32px; color: var(--gold);">0 сек</div>
+        <div class="final-score-box">
+            <div class="final-score-label">ВАШ РЕКОРД:</div>
+            <div id="final-time" class="final-score-val">0 сек</div>
         </div>
 
-        <button class="btn-up" style="width: 100%; margin-bottom: 10px;" onclick="location.reload()">ЕЩЕ РАЗ</button>
-        <button class="btn-down" style="width: 100%;" onclick="showLeaderboard()">РЕКОРДЫ</button>
+        <button class="btn-up" style="width: 100%; margin-bottom: 12px;" onclick="location.reload()">ПОПРОБОВАТЬ СНОВА</button>
+        <button class="btn-down" style="width: 100%;" onclick="sendResultToBot()">📊 В МИРОВОЙ РЕЙТИНГ</button>
     </div>
 
     <script>
+        // Инициализация Telegram WebApp
         let tg = window.Telegram ? window.Telegram.WebApp : null;
-        let userName = "Аноним";
-        
         if (tg) {
             tg.expand();
             tg.ready();
-            if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                userName = tg.initDataUnsafe.user.first_name || "Игрок";
-            }
+            tg.enableClosingConfirmation(); // Защита от случайного закрытия
         }
 
-        let rate = 16.0, inflation = 11.2, vvp = 1.2, rub = 98.5, time = 0, isGameOver = false;
+        // Стартовые параметры экономики
+        let rate = 16.0;
+        let inflation = 11.2;
+        let vvp = 1.2;
+        let rub = 98.5;
+        let time = 0;
+        let isGameOver = false;
 
+        // Изменение ставки пользователем
         window.changeRate = function(val) {
             if (isGameOver) return;
             rate += val;
-            if (rate < 0) rate = 0; if (rate > 50) rate = 50;
+            if (rate < 0) rate = 0; 
+            if (rate > 50) rate = 50; // Лимит чтобы не ломать UI
+            
             document.getElementById('rate-val').innerText = rate.toFixed(1) + "%";
+            
+            // Вибрация при нажатии
             if (tg && tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
         };
 
+        // Главный цикл экономики (раз в секунду)
         const gameLoop = setInterval(() => {
             if (isGameOver) return;
+            
             time++;
             
-            inflation += (22 - rate) * 0.12 + (Math.random() * 0.6 - 0.3);
-            vvp -= (rate - 15) * 0.05 + (inflation > 15 ? 0.15 : 0);
-            rub += (inflation * 0.18) - (rate * 0.07);
+            // Логика кризиса:
+            // Чем ниже ставка, тем выше инфляция
+            inflation += (21 - rate) * 0.12 + (Math.random() * 0.6 - 0.3);
+            // Чем выше ставка, тем хуже ВВП
+            vvp -= (rate - 15) * 0.06 + (inflation > 16 ? 0.15 : 0);
+            // Курс растет от инфляции и падает от высокой ставки
+            rub += (inflation * 0.2) - (rate * 0.08);
 
+            // Обновление интерфейса
             document.getElementById('inflation-val').innerText = inflation.toFixed(1) + "%";
             document.getElementById('vvp-val').innerText = (vvp > 0 ? "+" : "") + vvp.toFixed(1) + "%";
             document.getElementById('rub-val').innerText = rub.toFixed(1);
             document.getElementById('time-val').innerText = time;
 
-            if (inflation > 45 || vvp < -20 || rub > 300) {
-                let reason = inflation > 45 ? "Гиперинфляция!" : (vvp < -20 ? "Крах производства!" : "Обвал валюты!");
-                end(reason);
-            }
+            // Цветовая индикация проблем
+            document.getElementById('inflation-val').className = "value " + (inflation > 18 ? "danger" : "safe");
+            document.getElementById('vvp-val').className = "value " + (vvp < 0 ? "danger" : "safe");
+
+            // Проверка условий проигрыша
+            if (inflation > 45) end("Гиперинфляция уничтожила сбережения граждан.");
+            if (vvp < -20) end("Промышленность остановилась. Полный крах ВВП.");
+            if (rub > 350) end("Рубль обесценился. Импортная техника теперь стоит миллионы.");
         }, 1000);
 
+        // Функция завершения игры
         function end(reason) {
             isGameOver = true;
             clearInterval(gameLoop);
             
+            // Запись финальных данных в экран Game Over
             document.getElementById('final-vvp').innerText = vvp.toFixed(1) + "%";
             document.getElementById('final-rub').innerText = rub.toFixed(1);
             document.getElementById('final-inf').innerText = inflation.toFixed(1) + "%";
             document.getElementById('final-rate').innerText = rate.toFixed(1) + "%";
-            document.getElementById('final-time').innerText = time + " сек";
+            document.getElementById('final-time').innerText = time + " СЕК";
             
             document.getElementById('death-reason').innerText = reason;
             document.getElementById('game-over').style.display = 'flex';
             
-            saveScore(time);
+            // Вибрация при проигрыше
+            if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('error');
         }
 
-        function saveScore(score) {
-            let scores = JSON.parse(localStorage.getItem('boss_scores') || '[]');
-            scores.push({name: userName, score: score, date: new Date().toLocaleDateString()});
-            scores.sort((a,b) => b.score - a.score);
-            localStorage.setItem('boss_scores', JSON.stringify(scores.slice(0, 5)));
-        }
-
-        function showLeaderboard() {
-            let scores = JSON.parse(localStorage.getItem('boss_scores') || '[]');
-            let list = scores.map((s, i) => `${i+1}. ${s.name}: ${s.score} сек`).join('\n');
-            alert("🏆 ВАШИ РЕКОРДЫ:\n\n" + (list || "Рекордов пока нет"));
-        }
+        // ОТПРАВКА ДАННЫХ В PUZZLEBOT ДЛЯ РЕЙТИНГА
+        window.sendResultToBot = function() {
+            if (tg) {
+                // Отправляем количество секунд в Telegram бота
+                tg.sendData(time.toString()); 
+                // Закрываем окно Mini App
+                tg.close();
+            } else {
+                alert("Результат " + time + " сек был бы отправлен в Telegram.");
+            }
+        };
     </script>
 </body>
 </html>
